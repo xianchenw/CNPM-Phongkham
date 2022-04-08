@@ -1,0 +1,41 @@
+
+/* CSS FOR ACCOUNT SET */
+.aTag-not-have-href a {
+    color: #007bff !important;
+    text-decoration: none !important;
+}
+.aTag-not-have-href:hover a {
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+/* CSS FOR ACCOUNT SET - CHANGE PASS */
+span#checkpass:hover label {
+    cursor: pointer;
+    text-decoration: underline;
+}
+span#checkpass label {
+    text-decoration: none;
+}
+div#pass-new-again {
+    display: none !important;
+}
+.status-true-false {
+    width: 5vw;
+}
+
+/* bootstrap change table  */
+.my-custom-scrollbar {
+position: relative;
+height: 175px;
+overflow: auto;
+}
+.table-wrapper-scroll-y {
+display: block;
+}
+
+/* badge top */
+.cus-top-badge {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+}

@@ -1,0 +1,236 @@
+fieldset {
+  display: block;
+  margin-left: 2px;
+  margin-right: 2px;
+  padding-top: 0.35em;
+  padding-bottom: 0.625em;
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+  border: 2px groove (internal value);
+}
+#navbar {
+    transition: 1s ease;
+    z-index: 999;
+}
+body {
+    background-image: url('/static/images/bg.jpeg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+    font-size: 14pt;
+    scroll-behavior: smooth;
+}
+a:hover {
+    color: #56ed4e;
+    text-decoration: none !important;
+}
+div.background-below-text {
+    position: relative;
+}
+.pop-up-control {
+    position: fixed;
+    z-index: 999;
+    padding: 0 10px 10px 0;
+}
+#call-me {
+    bottom: 0;
+    right: 0;
+}
+#go-to-top {
+    bottom: 15%;
+    right: 1.5%;
+    display: block;
+}
+.go-to-top-hide {
+    display: none !important;
+}
+.cus-div-for-logo {
+    display: inline-block;
+    width: 128px !important;
+}
+.cus-nav-link > li, #logo {
+    padding: 10pt 20pt;
+    text-decoration: none;
+    list-style: none;
+}
+.cus-nav-link > li a:hover, #logo *:hover {
+    cursor: pointer;
+}
+.cus-logo-link {
+    display: inline-block;
+}
+#company-name {
+    font-size: 17pt;
+    margin: 0 auto;
+}
+.cus-nav-all {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cus-nav-all div {
+    margin: auto 0;
+}
+.cus-nav-all div * {
+    margin: auto 0;
+}
+.carousel-first-page {
+    height: 255px;
+    width: 1vw;
+}
+.cus-nav-link > li:nth-child(5) {
+    padding: 0 !important;
+    background-color: #ffc107;
+    border-radius: 10px;
+    display: inline-block;
+}
+.cus-nav-link > li a {
+    display: block;
+    margin: 0;
+    height: 100%;
+    padding: 15px 20px;
+}
+.cus-nav-link > li:nth-child(5) button {
+    padding: 25px 40px;
+
+}
+.cus-nav-link > li:nth-child(5):hover, .cus-nav-link > li:nth-child(5):hover button{
+    background-color: #9ccef5 !important;
+    cursor: pointer;
+    color: white
+}
+.overwrite-in {
+    position: absolute;
+    z-index: 1;
+}
+.opacity-filter {
+    width: 100%;
+}
+.opacity-filter img {
+    width: 100%;
+    filter: blur(1px);
+}
+#first-landing {
+    display: block;
+    left: 50px;
+    top: 300px;
+}
+#first-landing strong {
+    font-size: 55px;
+}
+#first-landing span {
+    font-size: 30px;
+    vertical-align: center;
+}
+#first-landing p {
+    display: block;
+    width: 40%;
+}
+.doctor-information-introduce {
+    text-align: center;
+    justify-content: center;
+    font-size: 25px;
+}
+#employee {
+    background-color: rgba(253, 253, 253, 0.5);
+    padding: 5% 0;
+}
+.h3-pad {
+    padding-bottom: 5%;
+}
+.introduce-image-block img {
+    padding: 1%;
+    margin: 0;
+}
+#info {
+    padding: 5% 0;
+}
+#info div:first-child strong, #info div:first-child span{
+    margin: 15px 150px;
+}
+.sticky {
+  position: fixed;
+  background-color: #56ed4e;
+  top: 0;
+  width: 100%;
+  transition: 1s ease;
+}
+.introduce-content-block > h4 {
+    text-align: center;
+    font-size: 35pt;
+    padding: 15px 0;
+}
+#introduce {
+    background-color: rgba(56, 237, 78, 0.2);
+    padding: 2.5% 0 5% 0;
+}
+#branch {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 15px 0 25px 5%;
+}
+#branch a {
+    color: #56ed4e !important;
+    font-weight: bold;
+}
+#branch a:hover {
+    color: #9ccef5 !important;
+}
+#branch img {
+    border: 1px solid #56ed4e;
+}
+#branch span {
+    margin-top: 20px;
+}
+.cus-button-as-link {
+    border: none;
+    background: none;
+    color: #007bff;
+    text-decoration: none !important;
+    padding: 10pt 20pt;
+}
+.cus-button-as-link:hover {
+    color: #56ed4e;
+}
+#do-you-find-your-order-history button {
+    padding: 1px;
+}
+#do-you-find-your-order-history span {
+    display: inline-block;
+    border: 5px dashed lightgray;
+    width: 90%;
+    padding: 8%;
+}
+#do-you-find-your-order-history {
+    background-color: rgba(218, 165, 20, 0.2);
+    padding: 2%;
+}
+#history-lookup {
+    border: 1px solid black;
+}
+.cus-header-modal {
+    width: 75%;
+    padding-left: 39%;
+    font-size: 35pt;
+}
+
+/* FOOTER */
+footer {
+    padding: 50px 0 30px 0;
+    background-color: #56ed4e;
+    color: white;
+}
+div.copy {
+    background-color: rgba(253, 253, 253, 0.2);
+}
+footer ul {
+    padding: 10px 0 0 0;
+}
+footer li {
+    text-decoration: none;
+    padding: 1px;
+    list-style: none;
+}
+footer a {
+    color: white;
+}
+footer a:hover {
+    color: #9ccef5;
+}

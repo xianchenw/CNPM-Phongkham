@@ -1,0 +1,38 @@
+{% extends 'admin/base.html' %}
+
+{% block body %}
+    <div class="container  ">
+        <div style="padding-right: 20px" class="table-wrapper-scroll-y my-custom-scrollbar">
+          <table  class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+            <thead >
+              <tr>
+                <th scope="col" class="text-center">Tên</th>
+                <th scope="col" class="text-center th-sm">Tuổi</th>
+                <th scope="col" class="text-center">Số điện thoại</th>
+                <th scope="col" class="text-center">Địa chỉ</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% if search_customer %}
+              <tr >
+                <th scope="row" >{{ search_customer.first_name +" "+ search_customer.last_name }}</th>
+                <td >{{now.year - search_customer.birthday.year }} </td>
+                <td >{{ search_customer.phone_number }}</td>
+                <td >{{search_customer.address_id}}</td>
+              </tr>
+            {% else%}
+              {% for p in cus %}
+              <tr class="text-center">
+                <td >{{ p.first_name +" "+ p.last_name }}</td>
+                <td>{{ now.year - p.birthday.year }}</td>
+                <td>{{ p.phone_number }}</td>
+                <td>{{ p.address_id}}</td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+            </tbody>
+          </table>
+
+        </div>
+    </div>
+{% endblock %}

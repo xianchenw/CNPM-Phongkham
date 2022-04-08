@@ -1,0 +1,412 @@
+{% extends 'admin/base.html' %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-style.css') }}"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
+        integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endblock %}
+
+{% block body %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.2/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.2/chart.esm.js"></script>
+
+    <!-- For Manager -->
+    {% if current_user.is_authenticated and current_user.user_role.name.__eq__('MANAGER') %}
+    <div style="border: 1px solid lightgray">
+        <div class="p-2">
+            <div class="d-md-flex flex-row">
+                <h3 style="font-weight:normal">Thông tin tổng quan</h3>
+                <h4 class="ml-auto" style="font-weight:normal">Tình trạng: <span>Tốt</span></h4>
+            </div>
+            <div class="chart container col-xs-12 col-md-8 pb-4" style="position: relative">
+                <canvas id="myChart" class=""></canvas>
+            </div>
+        </div>
+        <!--{{ pre }}-->
+        <!--{{ revenue_statistics }}-->
+        <script>
+            // Dữ liệu thống kê doanh thu tổng quan
+            let labels = []
+            let data = []
+            {% for mm in list_of_months[::-1] %}
+                labels.push('Tháng {{ mm }}')
+            {% endfor %}
+            {% for re in revenue_statistics[::-1] %}
+                data.push({{ re }})
+            {% endfor %}
+
+            //Dữ liệu thống kê sử dụng thuốc
+
+            let labels_medicine = []
+            let data_medicine = []
+            {% for medicine_name in medicine_statistics_name %}
+                labels_medicine.push('{{ medicine_name }}')
+            {% endfor %}
+            {% for medicine_percent in medicine_statistics_percent %}
+                data_medicine.push({{ medicine_percent }})
+            {% endfor %}
+            window.onload = function() {
+                const ctx = document.getElementById('myChart').getContext('2d');
+                loadChart(ctx, labels, data, 'line', 'Doanh thu');
+                const ctxStock = document.getElementById('StockChart').getContext('2d');
+                loadChart(ctxStock, labels_medicine, data_medicine, 'pie', 'Loại thuốc');
+            }
+            function loadChart(ctx, labels, data, type, label) {
+                const chart = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)',
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(153, 102, 255, 0.2)',
+                                'rgba(255, 159, 64, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+        <div class="d-md-flex flex-row">
+            <div class="cold-xs-12 col-md-6 m-4">
+                <fieldset style="border: 1px solid black">
+                    <legend><h3 class="p-2" style="font-weight: normal; display: inline-block; width='">Quản lý phòng khám</h3></legend>
+                    <div>
+                        <h5 class="px-4">Hôm nay</h5>
+                        <p class="px-4">Tổng số lượt khám tối đa: <span>{{ luot_kham_today[0] }}</span> </p>
+                        <p class="px-4">Số lượt khám còn lại: <span>{{ luot_kham_today[2] }}</span></p>
+                        <p class="px-4">Số lượt khám đã hẹn: <span>{{ luot_kham_today[1] }}</span></p>
+                    </div>
+                    <div>
+                        <h5 class="px-4">Ngày mai</h5>
+                        <p class="px-4">Tổng số lượt khám tối đa: <span>{{ luot_kham_tomorrow[0] }}</span></p>
+                        <p class="px-4">Số lượt khám còn lại: <span>{{ luot_kham_tomorrow[2] }}</span></p>
+                        <p class="px-4">Số lượt khám đã hẹn: <span>{{ luot_kham_tomorrow[1] }}</span></p>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="cold-xs-12 col-md-6 p-0">
+                <h3 class="p-2" style="font-weight: normal">Thuốc tồn kho</h3>
+                <div class="chart container col-xs-12 col-md-8 pb-2" style="position: relative">
+                    <canvas id="StockChart" class=""></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- for doctor -->
+        <!-- for nurse -->
+    </div>
+    {% endif %}
+
+    {%if current_user.is_authenticated and current_user.user_role.name.__eq__('NURSE') %}
+    <link href="{{ url_for('static', filename='css/admin-style.css') }}" rel="stylesheet"/>
+        <script>
+
+            function RealTimeClock() {
+                var dateFormat = new Date().toLocaleString("vi")
+                var decoratedString = dateFormat.split(", ")
+                rdClock.innerHTML = decoratedString[1]
+                rtClock.innerHTML = decoratedString[0]
+            }
+            //Thống kê bệnh nhân
+            let labels_patient = ['Đã hẹn', 'Còn lại']
+            let data_patient = []
+            {% if list_was_examination %}
+            data_patient.push({{ count_cus_was_sche }})
+            data_patient.push({{ max_customer - count_cus_was_sche }})
+            {% endif %}
+            window.onload = function() {
+                const ctxPatient = document.getElementById('PatientChart').getContext('2d');
+
+                loadChart(ctxPatient, labels_patient, data_patient, 'pie', 'Thống kê lượt đặt hẹn hôm nay');
+
+                //Real time clock
+                rtClock = document.getElementById('real-time-clock')
+                rdClock = document.getElementById('real-date-clock')
+                setInterval(RealTimeClock, 1000)
+            }
+            function loadChart(ctx, labels, data, type, label) {
+                const chart = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)',
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(153, 102, 255, 0.2)',
+                                'rgba(255, 159, 64, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+
+        <div class="container col-md-12 mb-1 pb-2" style="border: 1px solid lightgray">
+            <h3 class="pt-3" style="font-weight: normal">Thông tin tổng quan</h3>
+            <div class="d-md-flex flex-row py-4">
+                <div class="col-xs-12 col-md-7">
+                    <fieldset style="border: 1px solid black; height: 400px">
+                        <legend class="p-2" style="font-weight: normal; display: inline-block">Lịch hẹn tiếp theo</legend>
+                        <div style=" font-size: 18px">
+                            {% if customer_sche_now %}
+                            <p class="px-4">Giờ hẹn hiện tại:  <span id="real-time-clock" style="color: #56ed4e; font-size: 30pt;">time</span>
+                                <span id="real-date-clock" style="color: red; font-size: 15pt;">date</span></p>
+                            <div style="padding-top: 20px; line-height: 15px">
+                                <p class="px-4">Số thứ tự: <span>{{cus.index(customer_sche_now[0])+1}}</span> </p>
+                                <p class="px-4">Họ tên: <span>{{ customer_sche_now[0].last_name + ' ' +
+                                    customer_sche_now[0].first_name }}</span></p>
+                                <p class="px-4">Số điện thoại: <span>{{ customer_sche_now[0].phone_number }}</span></p>
+                                <p class="px-4">Ngày hẹn: <span>{{ now }}  {{ customer_sche_now[2] }}</span></p>
+                                <p class="px-4">Thời điểm đặt hẹn: <span>{{ customer_sche_now[0].appointment_date }}</span></p>
+                                <p class="px-4">Ghi chú:
+                                    <span>
+                                        {% if customer_sche_now.note %}{{ customer_sche_now.note }}
+                                        {% else %} {% endif %}
+                                    </span>
+                                </p>
+                            </div>
+                            {% else %}
+                            <p style="margin-left:0.5rem"><em>Không có lịch hẹn hiện tại</em></p>
+                            {% endif %}
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="chart container col-xs-12 col-md-5" style="position: relative">
+                    <canvas id="PatientChart" class=""></canvas>
+                </div>
+        </div>
+    </div>
+        <div class="container col-md-12" style="border: 1px solid lightgray; height: 310px">
+            <h3 class="pt-3" style="font-weight: normal">Tra cứu khách hàng</h3>
+            <form class="form-inline col-md-12">
+                <div class="col-md-6 row">
+                    <label for="customer_name">Tên khách hàng:</label>
+                    <input style="margin:15px; width: 338px" name="customer_name" type="text" class="form-control" placeholder="Nhập tên khách hàng" id="customer_name">
+                </div>
+                <div class="col-md-5 row">
+                    <label for="phoneNumber">Số điện thoại:</label>
+                    <input style="margin:15px; width: 279px" name="phoneNumber" type="text" class="form-control" placeholder="Nhập số điện thoại" id="phoneNumber">
+                </div>
+                <div class="col-md-1">
+                    <button style="margin-left:35px" type="submit" class="btn btn-primary right"><i class="fa fa-search"></i></button>
+                </div>
+            </form>
+            <div class="container col-md-12">
+                <div style="padding-right: 20px" class="table-wrapper-scroll-y my-custom-scrollbar">
+                  <table  class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+                    <thead >
+                      <tr>
+                        <th scope="col" class="text-center">Tên</th>
+                        <th scope="col" class="text-center th-sm">Tuổi</th>
+                        <th scope="col" class="text-center">Số điện thoại</th>
+                        <th scope="col" class="text-center">Thời gian đặt hẹn</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% if find_customer %}
+                      <tr >
+                        <th scope="row" >{{ find_customer.last_name +" "+ find_customer.first_name }}</th>
+                        <td >{{ now.year - find_customer.birthday.year }} </td>
+                        <td >{{ find_customer.phone_number }}</td>
+                        <td >{{ find_customer.appointment_date }}</td>
+                      </tr>
+                    {% else%}
+                      {% for p in cus %}
+                      <tr class="text-center">
+                        <td >{{ p.last_name +" "+ p.first_name }}</td>
+                        <td>{{ now.year - p.birthday.year }}</td>
+                        <td>{{ p.phone_number }}</td>
+                        <td>{{ p.appointment_date}}</td>
+                      </tr>
+                      {% endfor %}
+                    {% endif %}
+                    </tbody>
+                  </table>
+
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if current_user.is_authenticated and userrole.__eq__('UserRole.DOCTOR') %}
+    <script src="{{url_for('static', filename='javascript/upload_medicalBill.js')}}" ></script>
+    <script>
+        function loadChart(ctx, labels, data, type, label) {
+            const chart = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+    <script>
+        //Thống kê bệnh nhân
+        let labels_patient = ['Đã khám', 'Chưa khám']
+        let data_patient = []
+        {% if patient_stats %}
+        data_patient.push({{ patient_stats[1] }})
+        data_patient.push({{ patient_stats[2] }})
+        {% endif %}
+        window.onload = function() {
+            const ctxPatient = document.getElementById('PatientChart').getContext('2d');
+            loadChart(ctxPatient, labels_patient, data_patient, 'pie', 'Số bệnh nhân hôm nay');
+        }
+    </script>
+    <div class="container mb-2 pb-5" style="border: 1px solid lightgray">
+        <h3 class="pt-3" style="font-weight: normal">Thông tin tổng quan</h3>
+        <div class="d-md-flex flex-row py-4">
+            <div class="col-xs-12 col-md-7">
+                <fieldset style="border: 1px solid black">
+                    <legend><h4 class="p-2" style="font-weight: normal; display: inline-block; width='">Lịch hẹn tiếp theo</h4></legend>
+                    {% if customer_now %}
+                    <div>
+                        <p class="px-4">Số thứ tự: <span>{{ customers_today.index(customer_now)+1 }}</span> </p>
+                        <p class="px-4">Họ tên: <span>{{customer_now[0].last_name + " " + customer_now[0].first_name}}</span></p>
+                        <p class="px-4">Số điện thoại: <span>{{ customer_now[0].phone_number }}</span></p>
+                        <p class="px-4">Giờ hẹn: <span>{{ customer_now[1] }}</span></p>
+                        <p class="px-4">Thời điểm đặt hẹn: <span>{{ customer_now[0].appointment_date }}</span></p>
+                        <p class="px-4">
+                            Ghi chú: <span>{% if customer_now[0].note %}{{ customer_now[0].note }}{% else %} {% endif %}</span>
+                        </p>
+                    </div>
+                    <div class="d-flex flex-row-reverse">
+                        <a href="/admin/createmedicalbill"><button style="margin:0.5rem" class="btn btn-info p-2">Đi đến lập phiếu</button></a>
+                        <button style="margin:0.5rem" onclick="cancelMedicalBill({{customer_now[0].id}})" class="btn btn-danger p-2">Hủy lịch</button>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <em>Không có lịch hẹn tiếp theo!</em>
+                    </div>
+                    <br>
+                    {% endif %}
+                </fieldset>
+            </div>
+            <div class="chart container col-xs-12 col-md-5" style="position: relative">
+                <canvas id="PatientChart" class=""></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="border: 1px solid lightgray">
+        <h3 class="pt-3" style="font-weight: normal">Tra cứu khách hàng</h3>
+        <form class="form-inline col-md-12">
+            <div class="col-md-5 row">
+                <label for="customer_name">Tên khách hàng:</label>
+                <input style="margin:15px" name="customer_name" type="text" class="form-control" placeholder="Nhap ten khach hang" id="customer_name">
+            </div>
+            <div class="col-md-5 row">
+                <label for="phoneNumber">Số điện thoại:</label>
+                <input style="margin:15px" name="phoneNumber" type="text" class="form-control" placeholder="Nhap so dien thoai" required id="phoneNumber">
+            </div>
+            <div class="col-md-2">
+                <button style="margin:15px" type="submit" class="btn btn-primary">Tìm kiếm</button>
+            </div>
+        </form>
+        <div class="container">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>
+                    <button type="button" style="height:100%" class="btn btn-outline-light text-dark"><b>Tên</b></button>
+                </th>
+                <th>
+                    <button type="button" class="btn btn-outline-light text-dark"><b>Tuổi</b></button>
+                </th>
+                <th> <button type="button" class="btn btn-outline-light text-dark"><b>Ngày tháng</b></button> </th>
+                <th> <button type="button" class="btn btn-outline-light text-dark"><b>Nội dung khám</b></button> </th>
+              </tr>
+            </thead>
+            <tbody>
+                {% if search_customer %}
+                    {% for s in search_customer %}
+                      <tr>
+                        <td>{{ s[3]+" "+s[2]}}</td>
+                        <td>{{ now.year - s[4] }}</td>
+                        <td>{{ s[1] }}</td>
+                        <td>
+                            {% if s[0].diagnostic_disease %}{{s[0].diagnostic_disease}}{% else %} {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td><em>Khách hàng này chưa có phiếu khám nào</em></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+    </div>
+    {% endif %}
+{% endblock %}

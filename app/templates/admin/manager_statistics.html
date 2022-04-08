@@ -1,0 +1,317 @@
+{% extends 'admin/general.html' %}
+
+{% block body %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.2/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.2/chart.esm.js"></script>
+    <script src="{{ url_for('static', filename='javascript/stats.js') }}"></script>
+    <div class='d-flex flex-row pr-3' style="margin-bottom:1rem">
+        <form class="pl-2 ml-auto " style="display: inline-block">
+            <input type="number" min="2000" id="year" name="year" value="{{year}}" placeholder="Năm">
+            <input type="number" min="1" max="12" id="month" name="month" value="{{month}}" placeholder="Tháng">
+            <input type="submit" class="btn btn-success" value="Thống kê">
+        </form>
+    </div>
+    <div class="d-md-flex flex-row mb-2" style="border: 1px solid lightgray">
+        <div name="stats" class="col-xs-12 col-md-6 p-0">
+            <h3 class="p-2" style="font-weight: normal">Thống kê doanh thu</h3>
+            <div class='d-flex flex-row pr-3' >
+                <div class="pl-2 ml-auto" style="display: inline-block">
+                    <select name='chart' id="chartSelect-stat" onchange="loadChartRevenue(this.options[this.selectedIndex].value, true)">
+                        <option value="line" selected>Đường</option>
+                        <option value="bar">Cột</option>
+                        <option value="pie">Tròn</option>
+                    </select>
+                    <button class="btn btn-info" data-toggle="modal" data-target="#myRevenueModal">Xem chi tiết</button>
+                    <div class="modal" id="myRevenueModal">
+                          <div class="modal-dialog modal-lg">
+                            <div class="modal-content" >
+                                <div id="source-html-revenue">
+                                  <!-- Modal Header -->
+                                  <div class="modal-header">
+                                    <h4 class="modal-title">Báo cáo thống kê doanh thu</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                  </div>
+
+                                  <!-- Modal body -->
+                                  <div class="modal-body">
+                                      <table class="table">
+                                          <tr>
+                                            <th>Ngày</th>
+                                            <th>Số bệnh nhân</th>
+                                            <th>Doanh thu</th>
+                                            <th>Tỷ lệ</th>
+                                          </tr>
+                                          {% for r in revenue_stats %}
+                                          <tr>
+                                            <td>{{ r[0] }}</td>
+                                            <td>{{ r[1] }}</td>
+                                            <td>{{ r[2] }}</td>
+                                            <td>{{ "{:.2f}".format(r[3]) }}%</td>
+                                          </tr>
+                                          {% endfor %}
+                                      </table>
+                                  </div>
+                                </div>
+
+                              <!-- Modal footer -->
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Thoát</button>
+                                <button type="button" class="btn btn-success" onclick="window.location.replace('{{ url_for('static', filename='export/revenue_statistics.pdf')
+                         }}')" data-dismiss="modal">In báo cáo</button>
+                              </div>
+
+                            </div>
+                          </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart container" style="position: relative">
+                <canvas id="myRevenueChart" class=""></canvas>
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-6 p-0">
+            <h3 class="p-2" style="font-weight: normal">Tần suất khám</h3>
+            <div class='d-flex flex-row pr-3' >
+                <!--<a href="#" style="display: inline-block" class="link-info ml-auto">Bảng biểu</a>-->
+                <div class="pl-2 ml-auto" style="display: inline-block">
+                    <select name='chart' id="chartSelect-name" onchange="loadChartMedical(this.options[this.selectedIndex].value, true)">
+                        <option value="line">Đường</option>
+                        <option value="bar" selected>Cột</option>
+                        <option value="pie">Tròn</option>
+                    </select>
+                    <button class="btn btn-info" data-toggle="modal" data-target="#myExaminationModal">Xem chi tiết</button>
+                    <div class="modal" id="myExaminationModal">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div id="source-html-examination">
+                                  <!-- Modal Header -->
+                                  <div class="modal-header">
+                                    <h4 class="modal-title">Thống kê tần suất khám</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                  </div>
+
+                                  <!-- Modal body -->
+                                  <div class="modal-body">
+                                      <table class="table">
+                                          <tr>
+                                                <th>Ngày</th>
+                                                <th>Số khách đã khám</th>
+                                            </tr>
+                                            {% for e in examination_stats %}
+                                            <tr>
+                                                <td> {{ e[0] }} </td>
+                                                <td> {{ e[1] }} </td>
+                                            </tr>
+                                            {% endfor %}
+                                      </table>
+                                  </div>
+                                </div>
+                              <!-- Modal footer -->
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Thoát</button>
+                              </div>
+
+                            </div>
+                          </div>
+                    </div>
+                 </div>
+            </div>
+            <div class="chart container pb-2" style="position: relative">
+                <canvas id="myExaminationChart" class=""></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="d-md-flex flex-row container b-0" style="border: 1px solid lightgray">
+        <div class="col-xs-12 col-md-7 p-0">
+            <h3 class="p-2" style="font-weight: normal">Thống kê sử dụng các loại thuốc</h3>
+            <div class="chart container col-xs-12 col-md-7" style="position: relative">
+                <canvas id="myMedicineChart" class=""></canvas>
+            </div>
+        </div>
+        <div class="d-md-flex col-xs-12 col-md-6 m-4">
+            <div class="align-self-center text-justify" style="width: 100%">
+                <h4 class="pb-2 " style="font-weight: normal; font-size: 20px">Thống kê thuốc sử dụng tháng <span>{{month}}</span></h4>
+                <div class='d-flex flex-row pr-3 py-3'>
+                    <!--<a href="#" style="display: inline-block" class="link-info pb-3">Bảng biểu</a>-->
+                    <div class="pl-2" style="display: inline-block" >
+                        <select name='chart' id="chartSelect-medicine" onchange="loadChartMedicine(this.options[this.selectedIndex].value, true)">
+                            <option value="line">Đường</option>
+                            <option value="bar">Cột</option>
+                            <option value="pie" selected>Tròn</option>
+                        </select>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#myMedicineModal">Xem chi tiết</button>
+                        <!-- The Modal -->
+                        <div class="modal" id="myMedicineModal">
+                              <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div id="source-html-medicine">
+                                      <!-- Modal Header -->
+                                      <div class="modal-header">
+                                        <h4 class="modal-title">Báo cáo sử dụng thuốc</h4>
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                      </div>
+
+                                      <!-- Modal body -->
+                                      <div class="modal-body">
+                                          <table class="table">
+                                              <tr>
+                                                <th>Thuốc</th>
+                                                <th>Đơn vị tính</th>
+                                                <th>Số lượng</th>
+                                                <th>Số lần dùng</th>
+                                              </tr>
+                                              {% for m in medicine_stats %}
+                                              <tr>
+                                                <td>{{ m[0].name }}</td>
+                                                <td>
+                                                    {{"{:,.1f}".format(m[0].price)}} {% if m[0].unit %}{{m[0].unit}}{% else %}VND{% endif %}
+                                                </td>
+                                                <td>{{ m[1] }}</td>
+                                                <td>{{ m[2] }}</td>
+                                              </tr>
+                                              {% endfor %}
+                                          </table>
+                                      </div>
+                                    </div>
+                                  <!-- Modal footer -->
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Thoát</button>
+                                    <button type="button" class="btn btn-success"  onclick="window.location.replace('{{ url_for('static', filename='export/medicine_usage.pdf')
+                         }}')" data-dismiss="modal">In báo cáo</button>
+                                  </div>
+
+                                </div>
+                              </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-weight: normal; font-size: 15px">
+                    <p>
+                        Thuốc cần chú ý bổ sung thêm:
+                        {% for t in thuoc_bo_sung %}
+                        {{ t.name }} ,
+                        {% endfor %}
+                    </p>
+                    <p>
+                        Thuốc đã hết số lượng:
+                        {% for t in thuoc_het_sl %}
+                        {{ t.name }} ,
+                        {% endfor %}
+                    </p>
+                    <p>
+                        Tổng số thuốc tồn kho:
+                        {{ thuoc_ton_kho }}
+                    </p>
+                    <p>Tổng số thuốc đã dùng: {{ thuoc_da_dung }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+
+    function referenceValue(varObj, value) {
+        varObj.value = value;
+    }
+
+    let oldChartForRevenue = {};
+    let oldChartForMedical = {};
+    let oldChartForMedicine = {};
+
+    let labels=[], data=[], labels2=[], data2=[], labels3=[], data3=[]
+    let colors =[], colors2=[], colors3=[]
+    let borderColors=[], borderColors2=[], borderColors3=[]
+    let r,g,b
+    {% for r in revenue_stats %}
+    labels.push('{{ r[0] }}')
+    data.push({{ r[2] }})
+    r = Math.random()*255
+    g = Math.random()*255
+    b = Math.random()*255
+    colors.push(`rgba(${r},${g},${b},0.3)`)
+    borderColors.push(`rgba(${r},${g},${b},1)`)
+    {% endfor %}
+
+    {% for e in examination_stats %}
+    labels2.push('{{ e[0] }}')
+    data2.push({{ e[1] }})
+    r = Math.random()*255
+    g = Math.random()*255
+    b = Math.random()*255
+    colors2.push(`rgba(${r},${g},${b},0.3)`)
+    borderColors2.push(`rgba(${r},${g},${b},1)`)
+    {% endfor %}
+
+    {% for m in medicine_stats %}
+    labels3.push('{{ m[0] }}')
+    data3.push({{ m[1] }})
+    r = Math.random()*255
+    g = Math.random()*255
+    b = Math.random()*255
+    colors3.push(`rgba(${r},${g},${b},0.3)`)
+    borderColors3.push(`rgba(${r},${g},${b},1)`)
+    {% endfor %}
+
+    function loadChart(ctx, type, labels, label, data, colors, borderColors, oldChart ,destroy){
+        if (destroy)
+        {
+            oldChart.value.destroy();
+        }
+        const MyChart = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: colors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        referenceValue(oldChart, MyChart);
+    }
+    function loadChartRevenue(type, destroy) {
+        const ctxRevenueChart = document.getElementById('myRevenueChart').getContext('2d');
+        loadChart(ctxRevenueChart, type, labels, 'Thống kê doanh thu', data, colors, borderColors, oldChartForRevenue, destroy);
+    }
+    function loadChartMedical(type, destroy) {
+        const ctxExaminationChart = document.getElementById('myExaminationChart').getContext('2d');
+        loadChart(ctxExaminationChart, type, labels2, 'Tần suất khám', data2, colors2, borderColors2, oldChartForMedical, destroy);
+    }
+    function loadChartMedicine(type, destroy) {
+        const ctxMedicineChart = document.getElementById('myMedicineChart').getContext('2d');
+        loadChart(ctxMedicineChart, type, labels3, 'Thống kê thuốc', data3, colors3, borderColors3, oldChartForMedicine, destroy);
+    }
+    function exportHTML(obj){
+        var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+            "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+            "xmlns='http://www.w3.org/TR/REC-html40'>"+
+            "<head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title></head><body>";
+        var footer = "</body></html>";
+        var sourceHTML = header+obj.innerHTML+footer;
+
+        var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        var fileDownload = document.createElement("a");
+        document.body.appendChild(fileDownload);
+        fileDownload.href = source;
+        fileDownload.download = 'document.doc';
+        fileDownload.click();
+        document.body.removeChild(fileDownload);
+    }
+
+    window.onload = function() {
+        loadChartRevenue("line", false);
+        loadChartMedical("bar");
+        loadChartMedicine('pie');
+    }
+</script>
+<br><br>
+{% endblock %}

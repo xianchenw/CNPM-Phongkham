@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}<title>Phòng mạch HỒNG HIỀN VY TIẾN</title>{% endblock %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/logo.png') }}"/>
+    <!-- Bootstrap 4 -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap -->
+    <!-- JQuery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            $(function() {
+                $('a[href*=\\#]:not([href=\\#])').on('click', function() {
+                    var target = $(this.hash);
+                    target = target.length ? target : $('[name=' + this.hash.substr(1) +']');
+                    if (target.length) {
+                        $('html,body').animate({
+                            scrollTop: target.offset().top - $("#navbar").height() - 30
+                        }, 1000);
+                        return false;
+                    }
+                });
+            });
+            function GoToTop() {
+                $('html,body').animate({
+                            scrollTop: 0
+                        }, 1000);
+            }
+            function CheckPhoneNumberExist(phoneNumber) {
+                {% for cus_phone in customers_list %}
+                    if (phoneNumber.endsWith('{{ cus_phone }}')) {
+                        return true;
+                    }
+                {% endfor %}
+                return false;
+            }
+            function AnnouncementForNoSupport(phoneNumber, idSpanAnnounce) {
+                if (phoneNumber.startsWith('84') && phoneNumber.length == 11 || phoneNumber.startsWith('0') && phoneNumber.length == 10) {
+                    if (!CheckPhoneNumberExist(phoneNumber)) {
+                        document.getElementById(idSpanAnnounce).textContent = "Có vẻ như bạn cần đăng ký offline tại quầy lần đầu tiên."
+                    }
+                }
+            }
+            function Notifications() {
+                notif_code = '{{ notif }}'
+                if (notif_code.length > 0) {
+                    flagSuccessStatus = false
+                    console.log(notif_code)
+                    flagContent = document.getElementById('notification-header')
+                    contentBlock = document.getElementById('notification-content')
+                    switch (notif_code) {
+                        case "submitSuccess":
+                            flagSuccessStatus = true
+                            contentBlock.textContent = "Đơn hẹn đã được đặt. Nhân viên sẽ gọi lại xác nhận với bạn sớm thôi."
+                            break
+                        case "justOneADay":
+                            flagSuccessStatus = false
+                            contentBlock.textContent = "Đơn hẹn ngày hôm nay của bạn đã được đặt. Hệ thống không thể xử lý thêm đặt hẹn thêm cho bạn trong cùng một ngày."
+                            break
+                        case "ExistOne":
+                            flagSuccessStatus = false
+                            contentBlock.textContent = "Thời gian hẹn bạn đăng ký không có sẵn. Bạn vui lòng đăng ký hẹn thời điểm khác."
+                            break
+                        case "noSuccessReceipt":
+                            flagSuccessStatus = false
+                            contentBlock.textContent = "Chức năng đặt hẹn trực tuyến chỉ dành cho khách hàng đã từng thăm khám tại Phòng mạch Hồng Hiền Vy Tiến."
+                            break
+                        default:
+                            flagSuccessStatus = false
+                            contentBlock.textContent = "Thao tác chưa được xử lý. Lỗi không xác định (0x000)"
+                    }
+                    if (flagSuccessStatus) {
+                        flagContent.textContent = "THÀNH CÔNG"
+                        flagContent.setAttribute('style', 'color: green;')
+                        $('#notification-button-dismiss').addClass('btn-success')
+                    }
+                    else {
+                        flagContent.textContent = "THẤT BẠI"
+                        flagContent.setAttribute('style', 'color: red;')
+                        $('#notification-button-dismiss').addClass('btn-danger')
+                    }
+                    jQuery.noConflict();
+                    $('#notification-modal').modal('show');
+                }
+            }
+
+            $(window).on('load', function() {
+                history.pushState(null, null, '{{ url_for('index')}}');
+                {% if current_user.gender_id %}
+                    document.getElementById('gender-' + '{{current_user.gender_id.value}}').setAttribute('selected', 'selected');
+                {% endif %}
+                Notifications()
+            });
+
+        </script>
+        <!-- My custom -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+        <script src="{{ url_for('static', filename='javascript/javascript.js') }}"></script>
+
+</head>
+<body>
+    {% block header %}
+        <nav id="navbar" class="cus-nav-all d-flex flex-row justify-content-md-center">
+            <div id="logo">
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" width="64px" alt="logo"/>
+                    <span id="company-name">PHÒNG MẠCH HỒNG HIỀN VY TIẾN</span>
+                </a>
+            </div>
+            <div id="hot-link-nav col-md-5">
+                <ul class="d-flex flex-row cus-nav-link">
+                    <li><a href="{{ url_for('index') }}">Trang chủ</a></li>
+                    <li><a href="#introduce">Giới thiệu</a></li>
+                    <li><a href="#info">Liên hệ</a></li>
+                    <li><button type="button" class="cus-button-as-link" data-toggle="modal" onclick="CheckSession('{{ current_user.id }}', this.id)"
+                                id="bt-history-lookup">Lịch sử giao dịch</button></li>
+                    <li><button class="btn btn-warming" type="button" data-toggle="modal" onclick="CheckSession('{{ current_user.id }}',this.id)"
+                                id="bt-order-new">Đặt hẹn</button></li>
+                    <li><i>({% if current_user.id %}
+                        <span>{{ current_user.first_name }}, <a class="d-inline-block p-0 m-0" href="{{ url_for('customer_logout') }}">Thoát</a></span>
+                        {% else %}
+                        Chưa đăng nhập
+                        {% endif %})</i></li>
+                </ul>
+            </div>
+        </nav>
+        <div id="call-me" class="pop-up-control">
+            <a href="tel:1900189261">
+                <img src="/static/images/call-me.png" width="100px" alt="call">
+            </a>
+        </div>
+        <div id="go-to-top" class="pop-up-control go-to-top-hide">
+            <a href="javascript:;" onclick="GoToTop()">
+                <img src="/static/images/go-to-top.png" width="50px" alt="call">
+            </a>
+        </div>
+        <!-- login -->
+        <form action="{{ url_for('customer_login') }}" method="post" id="customer-validate">
+            <div id="login-require" class="modal fade" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Xác thực người dùng</h5>
+                            <button type="button" class="close" aria-label="Out" data-dismiss="modal">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" id="announce-for-no-support">
+                            <form>
+                                <div id="customerPhone pb-2">
+                                    <label class="col-md-4" for="customerPhoneNumber">Số điện thoại</label>
+                                    <input class="col-md-7" type="tel" maxlength="11" minlength="10" id="customerPhoneNumber" name="customerPhoneNumber"
+                                        onchange="CheckPhoneNumber(this.value, false); AnnouncementForNoSupport(this.value, 'announce-for-no-support')"
+                                           onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                           value="{{ current_phone }}" required/>
+                                </div>
+                                <span class="badge badge-danger col-md-5 ml-2" id="customerPhoneNumber-status"></span>
+                                <div id="OTPValidate pb-2">
+                                    <label class="col-md-4" for="otp-code">Mã xác thực</label>
+                                    <input class="col-md-4" type="text" id="otp-code" name="otp_code" onchange="ValidatePhoneNumber(this.value,'customer-validate')"
+                                          maxlength="6" minlength="6" required>
+                                    <!--<button type="button" class="cus-button-as-link" id="send-code-again"
+                                            onclick="($('customerPhoneNumber'), true)">Gửi lại mã
+                                        <span></span></button>-->
+                                    <a class="col-md-4" href="javascript:;" onclick="CheckPhoneNumber(document.getElementById('customerPhoneNumber').value, true)">Gửi lại mã</a>
+                                </div>
+                                <span class="badge badge-danger col-md-5 ml-2" id="otp-code-status">{{ error_code }}</span>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- NOTIFICATIONS -->
+        <div id="notification-modal" class="modal fade">
+            <div class="modal-dialog modal-confirm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title col-md-12 text-center" id="notification-header"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center" id="notification-content"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-block" id="notification-button-dismiss" data-dismiss="modal"
+                        onclick="window.location.replace('{{ url_for('index') }}')">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- history look up - id: history-lookup-->
+        <div id="history-lookup" class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title cus-header-modal">TRA CỨU</h5>
+                        <button type="button" class="close" aria-label="Out" onclick="location.replace('{{ url_for('customer_logout')}}');">
+                            <span aria-hidden="true">Thoát quyền</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {% if current_user.is_authenticated %}
+                        {% if orders_history %}
+                        <table class="table text-center">
+                            <thead class="thead-light">
+                            <tr>
+                                <th class="col-md-3">Tên</th>
+                                <th class="col-md-2">Triệu chứng</th>
+                                <th class="col-md-5">Nội dung</th>
+                                <th class="col-md-3">Trạng thái</th>
+                            </tr>
+                            </thead>
+                            <tr>
+                            {% for order in orders_history %}
+                                <td class="col-md-3">{{ order.name }}</td>
+                                <td class="col-md-2">{{ order.ordered_date }}</td>
+                                <td class="col-md-5">{{ order.disease_diagnostic }}</td>
+                                <!--{% if order.note %} {{ order.note }} {% else %}{% endif %}-->
+                                    {% if order.was_scheduled: %}
+                                        {% if order.order_state %}
+                                            <td style="color: green;">Đã khám</td>
+                                            {% else %}
+                                            <td style="color: yellow;">Đã hẹn</td>
+                                        {% endif %}
+                                    {% else %}
+                                        <td style="color: red;">Chưa xác nhận</td>
+                                    {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        {% else %}
+                        Chưa có thông tin nào.
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- order modal - id: order-new-->
+        <form action="{{ url_for('new_order_from_client') }}" method="post">
+            <div id="order-new" class="modal fade" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title cus-header-modal">ĐẶT HẸN</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="location.replace('{{ url_for('customer_logout')}}');">
+                            <span aria-hidden="true">Thoát quyền</span>
+                            </button>
+                        </div>
+                        <div class="modal-body container my-3">
+                            {% if current_user.is_authenticated %}
+                            <div class="d-flex flex-row">
+                                <label class="col-md-2" for="customer-fname">Tên</label>
+                                <input class="col-md-4 text-center" type="text" id="customer-fname" name="customer-fname"
+                                       value="{{ current_user.first_name }}" readonly required/></br>
+                                <label class="px-4 col-md-2" for="customer-lname">Họ</label>
+                                <input class="col-md-4 text-center" type="text" id="customer-lname" readonly name="customer-lname"
+                                       value="{{ current_user.last_name }}" required/></br>
+                            </div>
+                            <div class="d-flex flex-row my-3">
+                                <label class="col-md-2" for="customer-birth">Ngày sinh</label>
+                                <input class="col-md-4" type="date" id="customer-birth" name="customer-birth" value="{{ current_user.birthday.date() }}"
+                                       readonly required/>
+                                <label class="px-4 col-md-2" for="customer-gender">Giới tính</label>
+                                <select class="col-md-4" id="customer-gender" name="customer-gender">
+                                    <option id="gender-1" value="1">Nam</option>
+                                    <option id="gender-2" value="2">Nữ</option>
+                                    <option id="gender-3" value="3">Khác</option>
+                                </select>
+                            </div>
+                            <div class="d-flex flex-row my-3">
+                                <label class="col-md-3" for="customer-phone">Số điện thoại</label>
+                                <input class="col-md-9 text-center" id="customer-phone" type="text" maxlength="10" placeholder="098923xxx"
+                                    value="{{ current_user.phone_number }}" disabled readonly/></br>
+                            </div>
+                            <div class="d-flex flex-row my-3">
+                                <label class="col-md-3" for="order-date">Hẹn vào</label>
+                                <input class="col-md-9" id="order-date" type="datetime-local" name="order-date"
+                                       onchange="CheckOrderDateTime(this.id, 'alert-for-order-date')" required/></br>
+                            </div>
+                            <span class="badge badge-danger col-md-12 ml-2" id="alert-for-order-date"></span>
+                            <div  class="d-flex flex-row my-3">
+                                <label class="col-md-3" for="customer-note">Ghi chú</label>
+                                <textarea class="col-md-9" name="customer-note" id="customer-note" maxlength="255"></textarea>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                            <button type="button" id="btn-submit-order" class="btn btn-success">Đặt hẹn</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <script>
+            window.onscroll = function(event) {
+                event.preventDefault();
+                ShowHideGoToTop();
+                StickyNav()
+            };
+
+            var navbar = document.getElementById("navbar");
+            var sticky = navbar.offsetTop + $("#navbar").outerHeight(true) + 30;
+
+            function StickyNav() {
+              if (window.pageYOffset >= sticky) {
+                navbar.classList.add("sticky");
+                $("#first").css("padding-top", sticky);
+              } else {
+                $("#first").removeAttr("style");
+                navbar.classList.remove("sticky");
+              }
+            }
+            function ShowHideGoToTop() {
+                if (window.pageYOffset >= $("#first").position().top + $("#first").height()) {
+                    $("#go-to-top").removeClass("go-to-top-hide");
+                }
+                else {
+                    $("#go-to-top").addClass("go-to-top-hide");
+                }
+            }
+        </script>
+    {% endblock %}
+    {% block content %}
+        <!-- first landing -->
+        <div id="first" class="background-below-text opacity-filter">
+            <img src="{{ url_for('static', filename='images/background-2.jpg') }}" style="z-index: 2;" width="100%">
+            <span class="overwrite-in" id="first-landing">
+                <strong>Phòng mạch HỒNG HIỀN VY TIẾN</strong></br>
+                <span><i>Tận tụy - Tận tâm - Đảm bảo</i></span>
+                <p>Được xây dựng và hoạt động trong hơn 15 năm, Phòng mạch Hồng Hiền Vy Tiến chính là một địa điểm
+                được nhiều người lựa chọn thăm khám bởi chất lượng dịch vụ, độ tin cậy, thời gian chờ ngắn. Ngoài ra
+                để đáp ứng được sự tiện lợi của khách hàng, với dịch vụ đặt trước có thể đảm bảo được thời gian quý báu
+                của những người đến thăm khám mà không cần đặt trực tiếp tại quầy,...</p>
+                <button class="btn btn-warning" type="button" data-toggle="modal"
+                     id="bn-order-new" onclick="CheckSession('{{ current_user.id }}',this.id)">Đặt hẹn</button>
+            </span>
+        </div>
+        <!-- introduce -->
+        <div id="introduce" class="d-flex">
+            <div class="col-md-6 introduce-image-block d-flex flex-wrap justify-content-center">
+                <img class="col-md-7 animated slideInRight" id="pic1" src="{{ url_for('static', filename='images/pic1.jpg') }}" alt="pic1" data-wow-delay="0.3s">
+                <img class="col-md-3" id="pi2" src="{{ url_for('static', filename='images/pic4.jpg') }}" alt="pic2" data-wow-delay="0.3s">
+                <img class="col-md-4" id="pic3" src="{{ url_for('static', filename='images/pic2.jpg') }}" alt="pic3" data-wow-delay="0.3s">
+                <img class="col-md-6" id="pic4" src="{{ url_for('static', filename='images/pic3.jpg') }}" alt="pic4" data-wow-delay="0.3s">
+            </div>
+            <div class="col-md-6 introduce-content-block">
+                <h4 class="col-md-11">GIỚI THIỆU</h4>
+                <span class="col-md-11 d-block">
+                    <p><em>Phòng mạch Hồng Hiền Vy Tiến</em> được thành lập từ năm 2006, <em>Phòng mạch Hồng Hiền Vy Tiến</em> tự hào
+                        là thương hiệu phòng khám có bề dầy 15 năm kinh nghiệm chăm sóc và phục vụ khách hàng đến từ
+                        TP.Hồ Chí Minh và các tỉnh. Với tiêu chỉ “Tận tụy - Tận tâm - Đảm bảo”, <em>Phòng mạch Hồng Hiền Vy
+                            Tiến</em> luôn nỗ lực hết sức mình cùng khách hàng giữ gìn, bảo vệ sức khỏe bằng lòng yêu thương,
+                        coi sức khỏe của khách hàng là hàng đầu, vì quý khách hàng mà hết lòng phục vụ.</p>
+                    <strong>Tầm nhìn</strong>
+                    <p><em>Phòng mạch Hồng Hiền Vy Tiến</em> hướng tới phát triển chuỗi hệ thống phòng khám tiêu chuẩn 5 SAO
+                        – Chuẩn CHÂU ÂU để phục vụ khách hàng tốt hơn trên phạm vi TOÀN QUỐC.</p>
+                    <strong>Sứ mệnh</strong>
+                    <p>Mãi luôn là lựa chọn tốt nhất, đảm bảo nhất bảo vệ toàn diện sức khỏe của mọi người.</p>
+                    <strong>Cam kết với khách hàng</strong>
+                    <ul>
+                        <li>Khách hàng được thăm khám bởi những bác sĩ dày dặn kinh nghiệm, đảm bảo cho sức khỏe của quý
+                            khách được tư vấn tốt nhất.</li>
+                        <li>Người bệnh được chăm sóc, theo dõi ngay cả sau khi hoàn thành chuẩn trị tại phòng khám.</li>
+                        <li>Người bệnh được ưu tiên hàng đầu, cung cấp những điều khoản có lợi nhất dành cho các bệnh nhân.</li>
+                        <li>Tuân thủ nghiêm ngặt những quy định về an toàn chống nhiễm khuẩn để đảm bảo không gây nên
+                            nguy cơ nhiễm khuẩn trung tâm.</li>
+                    </ul>
+                </span>
+            </div>
+        </div>
+        <!-- branch -->
+        <div id="branch">
+            <h3 class="display-4 px-3">Dịch vụ</h3>
+    `       <div class="d-flex justify-content-md-around">
+                <div class="col-md-3">
+                    <a href="#">
+                        <img src="/static/images/tongquat.jpg" width="80%"/></br>
+                        <span>Khám tổng quát</span>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="#">
+                        <img src="/static/images/laixe.jpg" width="80%"/></br>
+                        <span>Khám sức khỏe thi bằng lái xe</span>
+                    </a>
+
+                </div>
+                <div class="col-md-3">
+                    <a href="#">
+                        <img src="/static/images/dinhky.jpg" width="80%"/></br>
+                        <span>Khám sức khỏe định kỳ</span>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="#">
+                        <img src="/static/images/cty.jpg" width="80%"/></br>
+                        <span>Khám sức khỏe công ty</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- employee team -->
+        <div id="employee">
+            <h3 class="display-4 text-center h3-pad">Đội ngũ bác sĩ dày dặn kinh nghiệm</h3>
+            <div class="d-flex justify-content-md-around">
+                <div class="col-md-4 doctor-information-introduce">
+                    <img class="rounded-circle" width="50%" src="{{ url_for('static', filename='images/BS-Pham-Duc-Son.png') }}" alt=""/>
+                    </br></br><span>
+                        <strong>Bác sĩ Phạm Đức Sơn</strong></br>
+                        <i>Bác sĩ Đa khoa </i>
+                    </span>
+                </div>
+                <div class="col-md-4 doctor-information-introduce">
+                    <img class="rounded-circle" width="50%" src="{{ url_for('static', filename='images/BS-Nguyen-Thi-Nhan.jpg') }}" alt=""/>
+                    </br></br><span>
+                        <strong>Bác sĩ Nguyễn Thị Nhàn</strong></br>
+                        <i>Chuyên khoa Nội tiết tổng hợp</i>
+                    </span>
+                </div>
+                <div class="col-md-4 doctor-information-introduce">
+                    <img class="rounded-circle" width="50%" src="{{ url_for('static', filename='images/BS-Pham-Huy-Huyen.png') }}" alt=""/>
+                    </br></br><span>
+                        <strong>Bác sĩ Phạm Huy Huyền</strong></br>
+                        <i>Bác sĩ Đa khoa</i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- link to history -->
+        <div id="do-you-find-your-order-history" class="text-center">
+            <span>Bạn đang tìm kiếm lịch sử giao dịch của mình. Chọn <button type="button" class="cus-button-as-link"
+               data-toggle="modal" onclick="CheckSession('{{ current_user.id }}', this.id)"
+                            id="ba-history-lookup">XEM NGAY</button> nhé!</span>
+        </div>
+        <!-- lh -->
+        <div id="info" class="d-flex">
+            <div class="col-md-6">
+                <strong style="font-size: 25px;">Phòng mạch Hồng Hiền Vy Tiến</strong></br>
+                <strong class="bi bi-geo-alt-fill"> Địa chỉ phòng mạch: </strong></br>
+                <span>371, Nguyễn Kiệm, phường 3, Quận Gò Vấp, TP.HCM</span></br>
+                <strong class="bi bi-clock-fill"> Thời gian làm việc: </strong></br>
+                <span>7:30 - 17:30, từ thứ 2 đến Chủ nhật</span></br>
+                <strong class="bi bi-telephone-fill"> Hotline:</strong></br>
+                <span>1900189261 - (028) 3612 481</span></br>
+                <strong class="bi bi-facebook"> Facebook</strong></br>
+                <span><a href="fb.com/phongkhamhonghienvytien">fb.com/phongkhamhonghienvytien</a></span></br>
+                <strong class="bi bi-link-45deg"> Website:</strong></br>
+                <span><a href="www.phongkhamhonghienvytien.com">www.phongkhamhonghienvytien.com</a></span>
+            </div>
+            <div class="col-md-6">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.925050868659!2d106.67491891524597!3d10.817047661399393!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528e1f241211f%3A0xc9ef195798144b1f!2sHo%20Chi%20Minh%20City%20Open%20University!5e0!3m2!1sen!2s!4v1641437351939!5m2!1sen!2s"
+                        width="80%" height="330" style="border:0;" allowfullscreen="false" loading="lazy"></iframe>
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block footer %}
+        <footer class=" d-flex justify-content-center flex-wrap">
+            <div class="col-md-1">
+                <strong>Giới thiệu</strong>
+                <ul>
+                    <li><a  id="5" href="javascript:;" onclick="checkObj()">Tổng quan</a></li>
+                    <li><a href="#">Cơ sở vật chất</a></li>
+                    <li><a href="#">Đội ngũ bác sĩ</a></li>
+                    <li><a href="#">Tuyển dụng</a></li>
+                    <li><a href="#">Khảo sát</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <strong>Chuyên khoa</strong>
+                <ul class="d-flex flex-wrap">
+                    <li class="col-md-6"><a href="#">Khoa nội tổng quát</a></li>
+                    <li class="col-md-6"><a href="#">Khoa ngoại tổng quát</a></li>
+                    <li class="col-md-6"><a href="#">Khoa tai mũi họng</a></li>
+                    <li class="col-md-6"><a href="#">Khoa răng hàm mặt</a></li>
+                    <li class="col-md-6"><a href="#">Khoa mắt</a></li>
+                    <li class="col-md-6"><a href="#">Khoa cấp cứu</a></li>
+                    <li class="col-md-6"><a href="#">Khoa tiêm chủng</a></li>
+                    <li class="col-md-6"><a href="#">Khoa xét nghiệm</a></li>
+                    <li class="col-md-6"><a href="#">Khoa CĐHA</a></li>
+                    <li class="col-md-6"><a href="#">Khoa da liễu</a></li>
+                    <li class="col-md-6"><a href="#">Nam khoa</a></li>
+                    <li class="col-md-6"><a href="#">Sản phụ khoa</a></li>
+
+                </ul>
+            </div>
+            <div class="col-md-2">
+                <strong>Dịch vụ</strong>
+                <ul>
+                    <li><a href="#">Khám sức khỏe tổng quát</a></li>
+                    <li><a href="#">Khám sức khỏe định kỳ</a></li>
+                    <li><a href="#">Khám sức khỏe công ty</a></li>
+                </ul>
+            </div>
+            <div class="col-md-2">
+                <strong>Tin tức và sự kiện</strong>
+                <ul>
+                    <li><a href="#">Hội thảo và hội nghị</a></li>
+                    <li><a href="#">Y học thường thức</a></li>
+                    <li><a href="#">Chăm sóc sức khỏe</a></li>
+                </ul>
+            </div>
+        </footer>
+        <div class="col-md-12 copy text-center" id="copy"> &copy;Được tạo dựng bởi nhóm Hồng - Hiền - Vy - Tiến môn Công nghệ Phần Mềm</div>
+    {% endblock %}
+</body>
+</html>
